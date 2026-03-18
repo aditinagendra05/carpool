@@ -1,0 +1,185 @@
+.wait-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.wait-card {
+  width: 100%;
+  max-width: 460px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  animation: fadeUp 0.5s ease both;
+  box-shadow: var(--shadow);
+}
+
+/* Badge */
+.wait-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.wait-badge.searching {
+  background: rgba(79,110,247,0.1);
+  border: 1px solid rgba(79,110,247,0.25);
+  color: var(--accent-light);
+}
+.wait-badge.matched {
+  background: rgba(62,207,142,0.1);
+  border: 1px solid rgba(62,207,142,0.25);
+  color: var(--green);
+}
+
+.wait-badge-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+.wait-badge-dot.pulsing { animation: pulse 1.5s ease-in-out infinite; }
+
+/* Icon with rings */
+.wait-icon-wrap {
+  position: relative;
+  width: 100px; height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.wait-rings { position: absolute; inset: 0; }
+.ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  opacity: 0;
+  animation: ping 2s ease-out infinite;
+}
+.r1 { inset: 0; }
+.r2 { inset: -12px; animation-delay: 0.5s; opacity: 0; border-color: var(--accent2); }
+.r3 { inset: -24px; animation-delay: 1s; opacity: 0; border-color: var(--accent-light); }
+
+.wait-icon { font-size: 48px; position: relative; z-index: 1; }
+
+/* Text */
+.wait-text { text-align: center; }
+.wait-text h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.wait-text p { font-size: 14px; color: var(--text-muted); }
+
+/* Info block */
+.wait-info {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.wait-route {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.wr-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+}
+.wr-dot.origin { background: var(--accent); }
+.wr-dot.dest { background: var(--green); }
+.wr-label { color: var(--text-bright); font-weight: 500; }
+.wr-arrow { color: var(--text-dim); }
+
+/* Progress */
+.wait-progress-wrap {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+.wait-progress-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+.wp-count { color: var(--accent-light); font-weight: 600; font-family: var(--font-display); }
+.wait-progress-bar {
+  height: 6px;
+  background: var(--border2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.wait-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+/* Users */
+.wait-users { display: flex; flex-direction: column; gap: 8px; }
+.wu-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.7px; }
+.wu-list { display: flex; flex-direction: column; gap: 8px; }
+.wu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  animation: slideIn 0.3s ease both;
+}
+.wu-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.wu-info { display: flex; flex-direction: column; gap: 2px; }
+.wu-name { font-size: 14px; color: var(--text-bright); font-weight: 500; }
+.wu-seats { font-size: 12px; color: var(--text-muted); }
+
+.wait-vehicle-tag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Cancel */
+.btn-cancel {
+  background: transparent;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 9px 22px;
+  transition: all 0.2s;
+}
+.btn-cancel:hover { border-color: var(--red); color: var(--red); }
