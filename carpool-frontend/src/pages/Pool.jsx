@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getPool, sendMessage, getMessages } from "../services/PoolService";
+import { getPool, sendMessage, getMessages, closePool } from "../services/PoolService";
 import "./Pool.css";
 
 export default function Pool() {
@@ -14,23 +14,57 @@ export default function Pool() {
   const [messages, setMessages] = useState([]);
   const [msg, setMsg] = useState("");
   const [sending, setSending] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(null);
+  const [closed, setClosed] = useState(false);
   const bottomRef = useRef(null);
   const chatPollRef = useRef(null);
+  const timerRef = useRef(null);
 
+  // Load pool
   useEffect(() => {
     if (!poolId) { navigate("/dashboard"); return; }
-    getPool(poolId).then(setPool).catch(console.error);
+    getPool(poolId).then(data => {
+      setPool(data);
+      if (data.status === "closed") setClosed(true);
+    }).catch(console.error);
   }, [poolId]);
 
-  // Poll chat
+  // Countdown timer
+  useEffect(() => {
+    if (!pool?.closedAt) return;
+    timerRef.current = setInterval(() => {
+      const remaining = new Date(pool.closedAt) - new Date();
+      if (remaining <= 0) {
+        setTimeLeft("00:00");
+        setClosed(true);
+        clearInterval(timerRef.current);
+        setTimeout(() => navigate("/dashboard"), 2000);
+      } else {
+        const m = Math.floor(remaining / 60000);
+        const s = Math.floor((remaining % 60000) / 1000);
+        setTimeLeft(`${m}:${s.toString().padStart(2, "0")}`);
+      }
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [pool?.closedAt]);
+
+  // Poll messages + status
   useEffect(() => {
     if (!poolId) return;
-    const fetchMsgs = () =>
-      getMessages(poolId)
-        .then(setMessages)
-        .catch(console.error);
-    fetchMsgs();
-    chatPollRef.current = setInterval(fetchMsgs, 3000);
+    const fetch = async () => {
+      try {
+        const [msgs, poolData] = await Promise.all([getMessages(poolId), getPool(poolId)]);
+        setMessages(msgs);
+        setPool(poolData);
+        if (poolData.status === "closed") {
+          setClosed(true);
+          clearInterval(chatPollRef.current);
+          setTimeout(() => navigate("/dashboard"), 2000);
+        }
+      } catch (err) { console.error(err); }
+    };
+    fetch();
+    chatPollRef.current = setInterval(fetch, 3000);
     return () => clearInterval(chatPollRef.current);
   }, [poolId]);
 
@@ -41,24 +75,41 @@ export default function Pool() {
 
   const handleSend = async (e) => {
     e.preventDefault();
-    if (!msg.trim() || sending) return;
+    if (!msg.trim() || sending || closed) return;
     setSending(true);
     try {
       await sendMessage(poolId, user?._id || user?.id, msg.trim());
       setMsg("");
       const data = await getMessages(poolId);
       setMessages(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSending(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setSending(false); }
+  };
+
+  const handleClose = async () => {
+    if (!window.confirm("Close this pool for everyone?")) return;
+    try {
+      await closePool(poolId);
+      setClosed(true);
+      setTimeout(() => navigate("/dashboard"), 1500);
+    } catch (err) { console.error(err); }
   };
 
   const myId = user?._id || user?.id;
 
   return (
     <div className="pool-container">
+      {/* Closed overlay */}
+      {closed && (
+        <div className="pool-closed-overlay">
+          <div className="pool-closed-card">
+            <span className="closed-icon">🔒</span>
+            <h2>Pool Closed</h2>
+            <p>Redirecting to dashboard…</p>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar */}
       <aside className="pool-sidebar">
         <div className="pool-sidebar-header">
@@ -99,6 +150,12 @@ export default function Pool() {
               <span>Total people</span>
               <span>{pool.totalSeats}</span>
             </div>
+            {timeLeft && (
+              <div className="pd-row">
+                <span>Closes in</span>
+                <span className="timer-text">{timeLeft}</span>
+              </div>
+            )}
           </div>
         )}
 
@@ -113,13 +170,19 @@ export default function Pool() {
                   {name[0].toUpperCase()}
                 </div>
                 <div className="pm-info">
-                  <span className="pm-name">{name} {isMe && <span className="pm-you">you</span>}</span>
+                  <span className="pm-name">
+                    {name} {isMe && <span className="pm-you">you</span>}
+                  </span>
                   <span className="pm-seats">{u.seats} seat{u.seats > 1 ? "s" : ""}</span>
                 </div>
               </div>
             );
           })}
         </div>
+
+        <button className="btn-close-pool" onClick={handleClose} disabled={closed}>
+          🔒 Close Pool
+        </button>
       </aside>
 
       {/* Chat */}
@@ -129,10 +192,17 @@ export default function Pool() {
             <h2>Group Chat</h2>
             <p>{pool?.users?.length || 0} members · {pool?.vehicleType === "car" ? "🚗 Car" : "🛺 Auto"}</p>
           </div>
+          {timeLeft && (
+            <div className="chat-timer">
+              <span className="timer-icon">⏱</span>
+              <span className="timer-val">{timeLeft}</span>
+              <span className="timer-label">remaining</span>
+            </div>
+          )}
         </div>
 
         <div className="chat-messages">
-          {messages.length === 0 && (
+          {messages.length === 0 && !closed && (
             <div className="chat-empty">
               <span>💬</span>
               <p>No messages yet. Say hi to your pool!</p>
@@ -161,19 +231,23 @@ export default function Pool() {
           <div ref={bottomRef} />
         </div>
 
-        <form className="chat-input-row" onSubmit={handleSend}>
-          <input
-            className="chat-input"
-            type="text"
-            placeholder="Type a message…"
-            value={msg}
-            onChange={e => setMsg(e.target.value)}
-            disabled={sending}
-          />
-          <button className="chat-send" type="submit" disabled={!msg.trim() || sending}>
-            {sending ? <span className="btn-spinner-sm" /> : "↑"}
-          </button>
-        </form>
+        {closed ? (
+          <div className="chat-closed-bar">🔒 This pool has been closed</div>
+        ) : (
+          <form className="chat-input-row" onSubmit={handleSend}>
+            <input
+              className="chat-input"
+              type="text"
+              placeholder="Type a message…"
+              value={msg}
+              onChange={e => setMsg(e.target.value)}
+              disabled={sending || closed}
+            />
+            <button className="chat-send" type="submit" disabled={!msg.trim() || sending || closed}>
+              {sending ? <span className="btn-spinner-sm" /> : "↑"}
+            </button>
+          </form>
+        )}
       </main>
     </div>
   );
@@ -190,11 +264,10 @@ const AVATAR_COLORS = [
 function getUserIndex(pool, senderId) {
   if (!pool?.users) return 0;
   const sid = senderId?._id || senderId;
-  return pool.users.findIndex(u => (u.userId?._id || u.userId) === sid) ?? 0;
+  return Math.max(0, pool.users.findIndex(u => (u.userId?._id || u.userId) === sid));
 }
 
 function formatTime(ts) {
   if (!ts) return "";
-  const d = new Date(ts);
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }

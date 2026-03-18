@@ -5,8 +5,8 @@ import { joinPool } from "../services/PoolService";
 import "./Dashboard.css";
 
 const VEHICLES = [
-  { id: "auto", label: "Auto", icon: "🛺", capacity: 4, desc: "Up to 4 people" },
-  { id: "car",  label: "Car",  icon: "🚗", capacity: 5, desc: "Up to 5 people" },
+  { id: "auto", label: "Auto", icon: "🛺", capacity: 3, desc: "Up to 3 people" },
+  { id: "car",  label: "Car",  icon: "🚗", capacity: 4, desc: "Up to 4 people" },
 ];
 
 export default function Dashboard() {

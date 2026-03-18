@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const CAPACITY = { auto: 4, car: 5 };
+const CAPACITY = { auto: 3, car: 4 };
 
 const messageSchema = new mongoose.Schema(
   {
@@ -43,28 +43,21 @@ const poolSchema = new mongoose.Schema(
       required: true,
     },
     users: [poolUserSchema],
-    totalSeats: {
-      type: Number,
-      default: 0,
-    },
-    capacity: {
-      type: Number,
-    },
+    totalSeats: { type: Number, default: 0 },
+    capacity: { type: Number },
     status: {
       type: String,
-      enum: ["waiting", "matched"],
+      enum: ["waiting", "matched", "closed"],
       default: "waiting",
     },
+    closedAt: { type: Date, default: null },
     messages: [messageSchema],
   },
   { timestamps: true }
 );
 
-// Auto-set capacity from vehicleType
 poolSchema.pre("save", function (next) {
-  if (!this.capacity) {
-    this.capacity = CAPACITY[this.vehicleType] || 4;
-  }
+  if (!this.capacity) this.capacity = CAPACITY[this.vehicleType] || 3;
   next();
 });
 

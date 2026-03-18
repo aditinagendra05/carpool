@@ -39,7 +39,7 @@ export default function Waiting() {
     return () => clearInterval(intervalRef.current);
   }, [poolId]);
 
-  const capacity = pool?.vehicleType === "car" ? 5 : 4;
+  const capacity = pool?.vehicleType === "car" ? 4 : 3;
   const current = pool?.totalSeats ?? 0;
   const progress = Math.min((current / capacity) * 100, 100);
   const isMatched = pool?.status === "matched";
