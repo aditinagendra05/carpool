@@ -45,6 +45,9 @@ export default function Dashboard() {
         </div>
         <div className="dash-user">
           <span className="dash-user-name">{user?.name}</span>
+          <button className="btn-logout" onClick={() => navigate("/history")}>
+            📋 History
+          </button>
           <button className="btn-logout" onClick={logout}>Sign out</button>
         </div>
       </header>

@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../components/Toast";
 import { getPool, sendMessage, getMessages, closePool } from "../services/PoolService";
 import "./Pool.css";
 
@@ -8,6 +9,7 @@ export default function Pool() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   const poolId = location.state?.poolId;
 
   const [pool, setPool] = useState(null);
@@ -19,12 +21,14 @@ export default function Pool() {
   const bottomRef = useRef(null);
   const chatPollRef = useRef(null);
   const timerRef = useRef(null);
+  const prevMemberCount = useRef(0);
 
-  // Load pool
+  // Load pool on mount
   useEffect(() => {
     if (!poolId) { navigate("/dashboard"); return; }
     getPool(poolId).then(data => {
       setPool(data);
+      prevMemberCount.current = data.users?.length ?? 0;
       if (data.status === "closed") setClosed(true);
     }).catch(console.error);
   }, [poolId]);
@@ -38,11 +42,16 @@ export default function Pool() {
         setTimeLeft("00:00");
         setClosed(true);
         clearInterval(timerRef.current);
+        toast({ type: "warning", title: "Pool closed", message: "Returning to dashboard…" });
         setTimeout(() => navigate("/dashboard"), 2000);
       } else {
         const m = Math.floor(remaining / 60000);
         const s = Math.floor((remaining % 60000) / 1000);
         setTimeLeft(`${m}:${s.toString().padStart(2, "0")}`);
+        // warn at 5 minutes remaining
+        if (m === 4 && s === 59) {
+          toast({ type: "warning", title: "5 minutes left", message: "Pool closes soon!" });
+        }
       }
     }, 1000);
     return () => clearInterval(timerRef.current);
@@ -51,24 +60,35 @@ export default function Pool() {
   // Poll messages + status
   useEffect(() => {
     if (!poolId) return;
-    const fetch = async () => {
+    const fetchAll = async () => {
       try {
         const [msgs, poolData] = await Promise.all([getMessages(poolId), getPool(poolId)]);
         setMessages(msgs);
         setPool(poolData);
+
+        // Toast when a new member joins
+        const newCount = poolData.users?.length ?? 0;
+        if (newCount > prevMemberCount.current) {
+          const newMember = poolData.users[newCount - 1];
+          const name = newMember?.userId?.name || "Someone";
+          toast({ type: "info", title: "New member joined!", message: `${name} joined the pool` });
+        }
+        prevMemberCount.current = newCount;
+
         if (poolData.status === "closed") {
           setClosed(true);
           clearInterval(chatPollRef.current);
+          toast({ type: "warning", title: "Pool closed", message: "Returning to dashboard…" });
           setTimeout(() => navigate("/dashboard"), 2000);
         }
       } catch (err) { console.error(err); }
     };
-    fetch();
-    chatPollRef.current = setInterval(fetch, 3000);
+    fetchAll();
+    chatPollRef.current = setInterval(fetchAll, 3000);
     return () => clearInterval(chatPollRef.current);
   }, [poolId]);
 
-  // Auto-scroll
+  // Auto-scroll to latest message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -82,8 +102,12 @@ export default function Pool() {
       setMsg("");
       const data = await getMessages(poolId);
       setMessages(data);
-    } catch (err) { console.error(err); }
-    finally { setSending(false); }
+    } catch (err) {
+      toast({ type: "error", title: "Failed to send", message: "Please try again." });
+      console.error(err);
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleClose = async () => {
@@ -91,8 +115,12 @@ export default function Pool() {
     try {
       await closePool(poolId);
       setClosed(true);
+      toast({ type: "success", title: "Pool closed", message: "Returning to dashboard…" });
       setTimeout(() => navigate("/dashboard"), 1500);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      toast({ type: "error", title: "Could not close pool", message: err?.response?.data?.message || "Try again." });
+      console.error(err);
+    }
   };
 
   const myId = user?._id || user?.id;
@@ -242,7 +270,9 @@ export default function Pool() {
               value={msg}
               onChange={e => setMsg(e.target.value)}
               disabled={sending || closed}
+              maxLength={500}
             />
+            <span className="chat-char-count">{msg.length}/500</span>
             <button className="chat-send" type="submit" disabled={!msg.trim() || sending || closed}>
               {sending ? <span className="btn-spinner-sm" /> : "↑"}
             </button>
