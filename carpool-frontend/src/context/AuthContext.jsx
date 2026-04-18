@@ -6,19 +6,20 @@ const AuthContext = createContext();
 const BASE = "http://localhost:5001/api/auth";
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(() => localStorage.getItem("cp_token"));
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("cp_token");
-    const storedUser = localStorage.getItem("cp_user");
-    if (stored && storedUser) {
-      setToken(stored);
-      setUser(JSON.parse(storedUser));
+  const [user, setUser] = useState(() => {
+    try {
+      const storedUser = localStorage.getItem("cp_user");
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch {
+      return null;
     }
-    setLoading(false);
-  }, []);
+  });
+
+  const [token, setToken] = useState(() => {
+    return localStorage.getItem("cp_token") || null;
+  });
+
+  const [loading, setLoading] = useState(false);
 
   const register = async (name, email, password) => {
     const res = await axios.post(`${BASE}/register`, { name, email, password });

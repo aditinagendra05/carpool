@@ -37,7 +37,6 @@ export default function Dashboard() {
 
   return (
     <div className="dash-container">
-      {/* Header */}
       <header className="dash-header">
         <div className="dash-logo">
           <span>🚗</span>
@@ -45,15 +44,12 @@ export default function Dashboard() {
         </div>
         <div className="dash-user">
           <span className="dash-user-name">{user?.name}</span>
-          <button className="btn-logout" onClick={() => navigate("/history")}>
-            📋 History
-          </button>
+          <button className="btn-history" onClick={() => navigate("/history")}>🕘 History</button>
           <button className="btn-logout" onClick={logout}>Sign out</button>
         </div>
       </header>
 
       <main className="dash-main">
-        {/* Route banner */}
         <div className="route-banner">
           <div className="route-stop origin">
             <span className="route-dot origin-dot" />
@@ -76,7 +72,6 @@ export default function Dashboard() {
         </div>
 
         <div className="dash-sections">
-          {/* Vehicle selector */}
           <section className="dash-section">
             <h2 className="section-title">Choose vehicle</h2>
             <div className="vehicle-grid">
@@ -95,7 +90,6 @@ export default function Dashboard() {
             </div>
           </section>
 
-          {/* People count */}
           <section className="dash-section">
             <h2 className="section-title">Number of people</h2>
             <div className="people-selector">
@@ -112,7 +106,6 @@ export default function Dashboard() {
             <p className="people-hint">{people} {people === 1 ? "person" : "people"} travelling</p>
           </section>
 
-          {/* Summary */}
           <div className="dash-summary">
             <div className="summary-row">
               <span>Vehicle</span>
@@ -130,11 +123,7 @@ export default function Dashboard() {
 
           {error && <div className="alert alert-error">{error}</div>}
 
-          <button
-            className="btn-join"
-            onClick={handleJoin}
-            disabled={loading}
-          >
+          <button className="btn-join" onClick={handleJoin} disabled={loading}>
             {loading ? <><span className="btn-spinner-dark" />Finding pool…</> : "🔍 Find Pool"}
           </button>
         </div>

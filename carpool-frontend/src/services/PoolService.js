@@ -2,54 +2,36 @@ import axios from "axios";
 
 const BASE_URL = "http://localhost:5001/api/pool";
 
-const api = axios.create({ baseURL: BASE_URL });
-
-// Attach token to every request automatically
-api.interceptors.request.use((config) => {
+const getHeaders = () => {
   const token = localStorage.getItem("cp_token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
-
-// If token expired/invalid, clear storage and redirect to login
-api.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    if (err.response?.status === 401) {
-      localStorage.removeItem("cp_token");
-      localStorage.removeItem("cp_user");
-      window.location.href = "/login";
-    }
-    return Promise.reject(err);
-  }
-);
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 export const joinPool = async (data) => {
-  const res = await api.post("/join", data);
+  const res = await axios.post(`${BASE_URL}/join`, data, { headers: getHeaders() });
   return res.data;
 };
 
 export const getPool = async (poolId) => {
-  const res = await api.get(`/${poolId}`);
+  const res = await axios.get(`${BASE_URL}/${poolId}`, { headers: getHeaders() });
   return res.data;
 };
 
 export const closePool = async (poolId) => {
-  const res = await api.post(`/${poolId}/close`, {});
+  const res = await axios.post(`${BASE_URL}/${poolId}/close`, {}, { headers: getHeaders() });
   return res.data;
 };
 
 export const sendMessage = async (poolId, senderId, text) => {
-  const res = await api.post(`/${poolId}/messages`, { senderId, text });
+  const res = await axios.post(
+    `${BASE_URL}/${poolId}/messages`,
+    { senderId, text },
+    { headers: getHeaders() }
+  );
   return res.data;
 };
 
 export const getMessages = async (poolId) => {
-  const res = await api.get(`/${poolId}/messages`);
-  return res.data;
-};
-
-export const getHistory = async (userId) => {
-  const res = await api.get(`/history/${userId}`);
+  const res = await axios.get(`${BASE_URL}/${poolId}/messages`, { headers: getHeaders() });
   return res.data;
 };

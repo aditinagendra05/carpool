@@ -2,51 +2,69 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: var(--bg);
 }
 
-.history-main {
-  flex: 1;
-  max-width: 680px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 40px 24px;
+.history-header {
   display: flex;
-  flex-direction: column;
-  gap: 24px;
-  animation: fadeUp 0.5s ease both;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 32px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(15,17,24,0.8);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .history-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.history-title h1 { font-size: 26px; font-weight: 700; }
-.history-count {
-  padding: 3px 10px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 100px;
-  font-size: 13px;
-  color: var(--text-muted);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-bright);
 }
 
-/* Empty state */
+.btn-back {
+  padding: 7px 16px;
+  background: transparent;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-back:hover { border-color: var(--accent); color: var(--accent-light); }
+
+.history-main {
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fadeUp 0.4s ease both;
+}
+
+.history-loading {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 40px;
+}
+
 .history-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 14px;
-  padding: 64px 24px;
-  color: var(--text-dim);
+  gap: 10px;
+  color: var(--text-muted);
+  padding: 60px 0;
   text-align: center;
 }
 .history-empty span { font-size: 48px; }
-.history-empty h3 { font-size: 18px; color: var(--text-bright); font-family: var(--font-display); }
 .history-empty p { font-size: 14px; }
 
-/* Ride card */
 .ride-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -56,118 +74,86 @@
   flex-direction: column;
   gap: 14px;
   transition: border-color 0.2s;
-  animation: fadeUp 0.4s ease both;
 }
 .ride-card:hover { border-color: var(--border2); }
 
-.ride-card-top {
+.ride-card-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
 }
 .ride-vehicle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-bright);
-  font-family: var(--font-display);
 }
-.ride-status-badge {
-  padding: 4px 12px;
-  border-radius: 100px;
+.ride-date {
   font-size: 12px;
-  font-weight: 600;
-  background: rgba(62,207,142,0.1);
-  color: var(--green);
-  border: 1px solid rgba(62,207,142,0.2);
+  color: var(--text-muted);
 }
 
 .ride-route {
   display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ride-stop {
+  display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-size: 13px;
   color: var(--text);
 }
-.rr-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.rr-dot.origin { background: var(--accent); }
-.rr-dot.dest { background: var(--green); }
-.rr-arrow { color: var(--text-dim); font-size: 12px; }
-.rr-label { color: var(--text-bright); font-weight: 500; }
+.ride-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ride-dot.origin { background: var(--accent); }
+.ride-dot.dest { background: var(--green); }
+.ride-line {
+  width: 2px; height: 14px;
+  background: linear-gradient(to bottom, var(--accent), var(--green));
+  margin-left: 3px;
+  border-radius: 2px;
+}
 
 .ride-meta {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-.ride-meta-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  justify-content: space-between;
   font-size: 13px;
   color: var(--text-muted);
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
 }
-.ride-meta-icon { font-size: 14px; }
+.ride-status { color: var(--green); font-weight: 500; }
 
-.ride-members {
+.ride-members { display: flex; flex-direction: column; gap: 8px; }
+.ride-members-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+}
+.ride-members-list {
   display: flex;
-  align-items: center;
-  gap: 6px;
   flex-wrap: wrap;
+  gap: 8px;
 }
-.rm-avatar {
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 700; color: #fff;
-  font-family: var(--font-display);
-  border: 2px solid var(--surface);
-  margin-left: -6px;
-}
-.rm-avatar:first-child { margin-left: 0; }
-.rm-names {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-left: 4px;
-}
-
-/* Loading skeleton */
-.history-skeleton {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.skeleton-card {
-  background: var(--surface);
+.ride-member-tag {
+  font-size: 12px;
+  padding: 4px 10px;
+  background: var(--surface2);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  border-radius: 100px;
+  color: var(--text);
 }
-.skeleton-line {
-  height: 14px;
-  border-radius: 7px;
-  background: linear-gradient(90deg, var(--surface2) 25%, var(--surface3) 50%, var(--surface2) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-.skeleton-line.short { width: 40%; }
-.skeleton-line.medium { width: 65%; }
 
-.btn-find-ride {
-  padding: 11px 24px;
-  background: var(--accent);
-  color: #fff;
-  border: none;
+.alert-error {
+  background: rgba(247,79,110,0.1);
+  color: var(--red);
+  border: 1px solid rgba(247,79,110,0.2);
+  padding: 11px 14px;
   border-radius: var(--radius-sm);
-  font-size: 14px;
-  font-weight: 600;
-  transition: all 0.2s;
-  box-shadow: 0 4px 16px rgba(79,110,247,0.3);
+  font-size: 13px;
 }
-.btn-find-ride:hover { background: var(--accent-light); transform: translateY(-1px); }

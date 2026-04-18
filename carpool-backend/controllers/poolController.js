@@ -1,12 +1,34 @@
 const Pool = require("../models/Pool");
 const { CAPACITY } = require("../models/Pool");
+const { saveRide } = require("./historyController");
+
+const recordHistory = async (pool) => {
+  if (!pool || !pool.users) return;
+  const members = pool.users.map((u) => ({
+    name: u.userId?.name || "User",
+    seats: u.seats,
+  }));
+  for (const u of pool.users) {
+    const userId = u.userId?._id || u.userId;
+    if (!userId) continue;
+    await saveRide({
+      userId,
+      poolId: pool._id,
+      vehicleType: pool.vehicleType,
+      seats: u.seats,
+      members,
+      status: "completed",
+    });
+  }
+};
 
 const scheduleAutoClose = (poolId, delay) => {
   setTimeout(async () => {
     try {
-      const pool = await Pool.findById(poolId);
+      const pool = await Pool.findById(poolId).populate("users.userId", "name");
       if (pool && pool.status === "matched") {
         await Pool.findByIdAndUpdate(poolId, { status: "closed" });
+        await recordHistory(pool);
         console.log(`Pool ${poolId} auto-closed after 20 minutes`);
       }
     } catch (err) {
@@ -81,29 +103,10 @@ const joinPool = async (req, res) => {
   }
 };
 
-// ── GET /api/pool/history/:userId ──
-const getHistory = async (req, res) => {
-  try {
-    const pools = await Pool.find({
-      "users.userId": req.params.userId,
-      status: "closed",
-    })
-      .sort({ updatedAt: -1 })
-      .limit(20)
-      .populate("users.userId", "name email")
-      .select("-messages");
-    res.json(pools);
-  } catch (err) {
-    console.error("getHistory error:", err);
-    res.status(500).json({ message: "Failed to fetch history." });
-  }
-};
-
 // ── GET /api/pool/:id ──
 const getPool = async (req, res) => {
   try {
-    const pool = await Pool
-      .findById(req.params.id)
+    const pool = await Pool.findById(req.params.id)
       .populate("users.userId", "name email")
       .select("-messages");
     if (!pool) return res.status(404).json({ message: "Pool not found." });
@@ -114,20 +117,13 @@ const getPool = async (req, res) => {
 };
 
 // ── POST /api/pool/:id/close ──
-// FIX: only pool members can close the pool
 const closePool = async (req, res) => {
   try {
-    const pool = await Pool.findById(req.params.id);
+    const pool = await Pool.findById(req.params.id).populate("users.userId", "name");
     if (!pool) return res.status(404).json({ message: "Pool not found." });
-
-    const isMember = pool.users.some(
-      (u) => u.userId.toString() === req.user._id.toString()
-    );
-    if (!isMember)
-      return res.status(403).json({ message: "Only pool members can close the pool." });
-
     pool.status = "closed";
     await pool.save();
+    await recordHistory(pool);
     res.json(pool);
   } catch (err) {
     res.status(500).json({ message: "Failed to close pool." });
@@ -148,7 +144,9 @@ const sendMessage = async (req, res) => {
     if (pool.status !== "matched")
       return res.status(403).json({ message: "Chat is only available in matched pools." });
 
-    const isMember = pool.users.some(u => u.userId.toString() === senderId.toString());
+    const isMember = pool.users.some(
+      (u) => u.userId.toString() === senderId.toString()
+    );
     if (!isMember)
       return res.status(403).json({ message: "You are not a member of this pool." });
 
@@ -165,8 +163,7 @@ const sendMessage = async (req, res) => {
 // ── GET /api/pool/:id/messages ──
 const getMessages = async (req, res) => {
   try {
-    const pool = await Pool
-      .findById(req.params.id)
+    const pool = await Pool.findById(req.params.id)
       .populate("messages.senderId", "name")
       .select("messages status");
     if (!pool) return res.status(404).json({ message: "Pool not found." });
@@ -176,4 +173,4 @@ const getMessages = async (req, res) => {
   }
 };
 
-module.exports = { joinPool, getPool, sendMessage, getMessages, closePool, getHistory };
+module.exports = { joinPool, getPool, sendMessage, getMessages, closePool };
