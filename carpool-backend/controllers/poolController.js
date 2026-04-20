@@ -1,34 +1,12 @@
 const Pool = require("../models/Pool");
 const { CAPACITY } = require("../models/Pool");
-const { saveRide } = require("./historyController");
-
-const recordHistory = async (pool) => {
-  if (!pool || !pool.users) return;
-  const members = pool.users.map((u) => ({
-    name: u.userId?.name || "User",
-    seats: u.seats,
-  }));
-  for (const u of pool.users) {
-    const userId = u.userId?._id || u.userId;
-    if (!userId) continue;
-    await saveRide({
-      userId,
-      poolId: pool._id,
-      vehicleType: pool.vehicleType,
-      seats: u.seats,
-      members,
-      status: "completed",
-    });
-  }
-};
 
 const scheduleAutoClose = (poolId, delay) => {
   setTimeout(async () => {
     try {
-      const pool = await Pool.findById(poolId).populate("users.userId", "name");
+      const pool = await Pool.findById(poolId);
       if (pool && pool.status === "matched") {
         await Pool.findByIdAndUpdate(poolId, { status: "closed" });
-        await recordHistory(pool);
         console.log(`Pool ${poolId} auto-closed after 20 minutes`);
       }
     } catch (err) {
@@ -41,6 +19,7 @@ const scheduleAutoClose = (poolId, delay) => {
 const joinPool = async (req, res) => {
   try {
     const { userId, vehicleType, seats } = req.body;
+
     if (!userId || !vehicleType || !seats)
       return res.status(400).json({ message: "userId, vehicleType, and seats are required." });
     if (!["auto", "car"].includes(vehicleType))
@@ -49,19 +28,50 @@ const joinPool = async (req, res) => {
     const seatsNum = Number(seats);
     const cap = CAPACITY[vehicleType];
 
-    if (seatsNum < 1 || seatsNum > cap)
+    if (isNaN(seatsNum) || seatsNum < 1 || seatsNum > cap)
       return res.status(400).json({ message: `Seats must be between 1 and ${cap}.` });
 
+    // ── If user is already in a waiting pool of this type,
+    //    update their seat count to the newly requested value
+    //    instead of returning stale data.
     const alreadyIn = await Pool.findOne({
       vehicleType,
       status: "waiting",
       "users.userId": userId,
     });
+
     if (alreadyIn) {
-      await alreadyIn.populate("users.userId", "name email");
-      return res.status(200).json(alreadyIn);
+      // Find this user's entry and update their seat count
+      const userEntry = alreadyIn.users.find(
+        (u) => u.userId.toString() === userId.toString()
+      );
+      if (userEntry) {
+        const seatDiff = seatsNum - userEntry.seats;
+        const newTotal = alreadyIn.totalSeats + seatDiff;
+
+        if (newTotal > cap) {
+          return res.status(400).json({
+            message: `Not enough seats. Only ${cap - (alreadyIn.totalSeats - userEntry.seats)} available.`,
+          });
+        }
+
+        userEntry.seats = seatsNum;
+        alreadyIn.totalSeats = newTotal;
+
+        const TWENTY_MINS = 20 * 60 * 1000;
+        if (alreadyIn.totalSeats >= cap) {
+          alreadyIn.status = "matched";
+          alreadyIn.closedAt = new Date(Date.now() + TWENTY_MINS);
+        }
+
+        const saved = await alreadyIn.save();
+        if (saved.status === "matched") scheduleAutoClose(saved._id, TWENTY_MINS);
+        await saved.populate("users.userId", "name email");
+        return res.status(200).json(saved);
+      }
     }
 
+    // ── Try to join an existing waiting pool ──
     const existing = await Pool.findOne({
       vehicleType,
       status: "waiting",
@@ -83,6 +93,7 @@ const joinPool = async (req, res) => {
         pool = await existing.save();
       }
     } else {
+      // ── Create a new pool ──
       const isMatched = seatsNum >= cap;
       pool = await Pool.create({
         vehicleType,
@@ -106,7 +117,8 @@ const joinPool = async (req, res) => {
 // ── GET /api/pool/:id ──
 const getPool = async (req, res) => {
   try {
-    const pool = await Pool.findById(req.params.id)
+    const pool = await Pool
+      .findById(req.params.id)
       .populate("users.userId", "name email")
       .select("-messages");
     if (!pool) return res.status(404).json({ message: "Pool not found." });
@@ -119,11 +131,12 @@ const getPool = async (req, res) => {
 // ── POST /api/pool/:id/close ──
 const closePool = async (req, res) => {
   try {
-    const pool = await Pool.findById(req.params.id).populate("users.userId", "name");
+    const pool = await Pool.findByIdAndUpdate(
+      req.params.id,
+      { status: "closed" },
+      { new: true }
+    );
     if (!pool) return res.status(404).json({ message: "Pool not found." });
-    pool.status = "closed";
-    await pool.save();
-    await recordHistory(pool);
     res.json(pool);
   } catch (err) {
     res.status(500).json({ message: "Failed to close pool." });
@@ -163,7 +176,8 @@ const sendMessage = async (req, res) => {
 // ── GET /api/pool/:id/messages ──
 const getMessages = async (req, res) => {
   try {
-    const pool = await Pool.findById(req.params.id)
+    const pool = await Pool
+      .findById(req.params.id)
       .populate("messages.senderId", "name")
       .select("messages status");
     if (!pool) return res.status(404).json({ message: "Pool not found." });

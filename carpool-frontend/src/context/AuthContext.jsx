@@ -3,23 +3,27 @@ import axios from "axios";
 
 const AuthContext = createContext();
 
-const BASE = "http://localhost:5001/api/auth";
+// ─────────────────────────────────────────────
+//  Uses VITE_API_BASE_URL env var if set,
+//  otherwise falls back to localhost:5001.
+// ─────────────────────────────────────────────
+const API_ROOT = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001";
+const BASE = `${API_ROOT}/api/auth`;
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    try {
-      const storedUser = localStorage.getItem("cp_user");
-      return storedUser ? JSON.parse(storedUser) : null;
-    } catch {
-      return null;
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem("cp_token"));
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("cp_token");
+    const storedUser = localStorage.getItem("cp_user");
+    if (stored && storedUser) {
+      setToken(stored);
+      setUser(JSON.parse(storedUser));
     }
-  });
-
-  const [token, setToken] = useState(() => {
-    return localStorage.getItem("cp_token") || null;
-  });
-
-  const [loading, setLoading] = useState(false);
+    setLoading(false);
+  }, []);
 
   const register = async (name, email, password) => {
     const res = await axios.post(`${BASE}/register`, { name, email, password });
