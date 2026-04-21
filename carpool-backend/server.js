@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
-
+const cors = require('cors');
 dotenv.config();
 
 const authRoutes = require("./routes/auth");
@@ -24,6 +24,15 @@ const LOCAL_ORIGINS = [
   "http://localhost:5175",
   "http://localhost:5176",
 ];
+
+app.use(cors({
+  origin: "*", // This allows any website to access your API (best for testing)
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
+
+app.use(express.json());
 
 const extraOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean)

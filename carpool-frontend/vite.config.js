@@ -6,12 +6,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      // Whenever your frontend calls something starting with '/api'
       '/api': {
-        // It automatically redirects to your backend External IP
-        target: 'http://35.200.225.107:5001', 
+        target: 'https://carpool-backend-482767717624.asia-south1.run.app',
         changeOrigin: true,
-        secure: false,
+        secure: true, // Set to true because Cloud Run uses HTTPS
       }
     }
   }
