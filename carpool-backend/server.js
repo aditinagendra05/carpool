@@ -26,7 +26,7 @@ const LOCAL_ORIGINS = [
 ];
 
 app.use(cors({
-  origin: "*", // This allows any website to access your API (best for testing)
+  origin: ["http://localhost:5173", "https://carpool-backend-482767717624.asia-south1.run.app"], // This allows any website to access your API (best for testing)
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
