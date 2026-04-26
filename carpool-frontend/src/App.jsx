@@ -6,12 +6,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Waiting from "./pages/Waiting";
 import Pool from "./pages/Pool";
-
-
 import History from "./pages/History";
-
-// inside <Routes>:
-<Route path="/history" element={<PrivateRoute><History /></PrivateRoute>} />
 
 function PrivateRoute({ children }) {
   const { token, loading } = useAuth();
@@ -28,6 +23,7 @@ export default function App() {
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
         <Route path="/waiting" element={<PrivateRoute><Waiting /></PrivateRoute>} />
         <Route path="/pool" element={<PrivateRoute><Pool /></PrivateRoute>} />
+        <Route path="/history" element={<PrivateRoute><History /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>
