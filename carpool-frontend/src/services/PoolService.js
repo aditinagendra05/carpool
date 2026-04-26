@@ -39,3 +39,12 @@ export const getUserHistory = async (userId) => {
   const res = await axios.get(`${BASE_URL}/history/${userId}`, { headers: getHeaders() });
   return res.data;
 };
+
+export const leavePool = async (poolId, userId) => {
+  const res = await axios.post(
+    `${BASE_URL}/${poolId}/leave`,
+    { userId },
+    { headers: getHeaders() }
+  );
+  return res.data;
+};

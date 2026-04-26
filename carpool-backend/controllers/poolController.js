@@ -172,5 +172,37 @@ const getUserHistory = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch history." });
   }
 };
+// ── POST /api/pool/:id/leave ──
+const leavePool = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const pool = await Pool.findById(req.params.id);
+    if (!pool) return res.status(404).json({ message: "Pool not found." });
 
-module.exports = { joinPool, getPool, sendMessage, getMessages, closePool, getUserHistory };
+    // Only allow leaving a waiting pool
+    if (pool.status !== "waiting") {
+      return res.status(400).json({ message: "Cannot leave a matched or closed pool." });
+    }
+
+    // Remove user from pool
+    const userEntry = pool.users.find(u => u.userId.toString() === userId.toString());
+    if (!userEntry) return res.status(404).json({ message: "User not in pool." });
+
+    pool.users = pool.users.filter(u => u.userId.toString() !== userId.toString());
+    pool.totalSeats -= userEntry.seats;
+
+    // If pool is now empty, delete it entirely
+    if (pool.users.length === 0) {
+      await Pool.findByIdAndDelete(pool._id);
+      return res.json({ message: "Pool deleted." });
+    }
+
+    await pool.save();
+    res.json({ message: "Left pool." });
+  } catch (err) {
+    console.error("leavePool error:", err);
+    res.status(500).json({ message: "Failed to leave pool." });
+  }
+};
+
+module.exports = { joinPool, getPool, sendMessage, getMessages, closePool, getUserHistory, leavePool };

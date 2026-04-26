@@ -5,6 +5,7 @@ const { protect } = require("../middleware/auth");
 
 router.post("/join", protect, joinPool);
 router.get("/history/:userId", protect, getUserHistory);  // ← add this
+router.post("/:id/leave", protect, leavePool);  
 router.get("/:id", protect, getPool);
 router.post("/:id/close", protect, closePool);
 router.post("/:id/messages", protect, sendMessage);
