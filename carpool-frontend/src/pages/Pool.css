@@ -282,3 +282,13 @@
   .pool-container { flex-direction: column; }
   .pool-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
 }
+
+/* Add this to the bottom of your existing Pool.css */
+
+.chat-char-count {
+  font-size: 11px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  min-width: 36px;
+  text-align: right;
+}

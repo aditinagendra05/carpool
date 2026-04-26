@@ -1,6 +1,15 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:5001/api/pool";
+// ─────────────────────────────────────────────
+//  API Base URL
+//  For local dev this defaults to localhost:5001.
+//  For cloud deployment, set VITE_API_BASE_URL in
+//  your .env file, e.g.:
+//    VITE_API_BASE_URL=http://YOUR_SERVER_IP:5001
+// ─────────────────────────────────────────────
+
+
+const BASE_URL = `${import.meta.env.VITE_API_URL}/api/pool`;
 
 const getHeaders = () => {
   const token = localStorage.getItem("cp_token");

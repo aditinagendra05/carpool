@@ -15,14 +15,21 @@ export default function Register() {
   const submit = async (e) => {
     e.preventDefault();
     setError("");
-    if (form.password !== form.confirm) return setError("Passwords don't match.");
+    if (form.name.trim().length < 2) return setError("Name must be at least 2 characters.");
     if (form.password.length < 6) return setError("Password must be at least 6 characters.");
+    if (form.password !== form.confirm) return setError("Passwords don't match.");
     setLoading(true);
     try {
-      await register(form.name, form.email, form.password);
+      await register(form.name.trim(), form.email.trim(), form.password);
       navigate("/dashboard");
     } catch (err) {
-      setError(err?.response?.data?.message || "Registration failed. Please try again.");
+      if (err?.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err?.code === "ERR_NETWORK") {
+        setError("Cannot reach server. Is the backend running on port 5001?");
+      } else {
+        setError("Registration failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

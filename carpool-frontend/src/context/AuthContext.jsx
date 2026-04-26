@@ -3,7 +3,12 @@ import axios from "axios";
 
 const AuthContext = createContext();
 
-const BASE = "http://localhost:5001/api/auth";
+// ─────────────────────────────────────────────
+//  Uses VITE_API_BASE_URL env var if set,
+//  otherwise falls back to localhost:5001.
+// ─────────────────────────────────────────────
+
+const BASE = `${import.meta.env.VITE_API_URL}/api/auth`;
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

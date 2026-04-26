@@ -19,6 +19,7 @@ const scheduleAutoClose = (poolId, delay) => {
 const joinPool = async (req, res) => {
   try {
     const { userId, vehicleType, seats } = req.body;
+
     if (!userId || !vehicleType || !seats)
       return res.status(400).json({ message: "userId, vehicleType, and seats are required." });
     if (!["auto", "car"].includes(vehicleType))
@@ -27,19 +28,50 @@ const joinPool = async (req, res) => {
     const seatsNum = Number(seats);
     const cap = CAPACITY[vehicleType];
 
-    if (seatsNum < 1 || seatsNum > cap)
+    if (isNaN(seatsNum) || seatsNum < 1 || seatsNum > cap)
       return res.status(400).json({ message: `Seats must be between 1 and ${cap}.` });
 
+    // ── If user is already in a waiting pool of this type,
+    //    update their seat count to the newly requested value
+    //    instead of returning stale data.
     const alreadyIn = await Pool.findOne({
       vehicleType,
       status: "waiting",
       "users.userId": userId,
     });
+
     if (alreadyIn) {
-      await alreadyIn.populate("users.userId", "name email");
-      return res.status(200).json(alreadyIn);
+      // Find this user's entry and update their seat count
+      const userEntry = alreadyIn.users.find(
+        (u) => u.userId.toString() === userId.toString()
+      );
+      if (userEntry) {
+        const seatDiff = seatsNum - userEntry.seats;
+        const newTotal = alreadyIn.totalSeats + seatDiff;
+
+        if (newTotal > cap) {
+          return res.status(400).json({
+            message: `Not enough seats. Only ${cap - (alreadyIn.totalSeats - userEntry.seats)} available.`,
+          });
+        }
+
+        userEntry.seats = seatsNum;
+        alreadyIn.totalSeats = newTotal;
+
+        const TWENTY_MINS = 20 * 60 * 1000;
+        if (alreadyIn.totalSeats >= cap) {
+          alreadyIn.status = "matched";
+          alreadyIn.closedAt = new Date(Date.now() + TWENTY_MINS);
+        }
+
+        const saved = await alreadyIn.save();
+        if (saved.status === "matched") scheduleAutoClose(saved._id, TWENTY_MINS);
+        await saved.populate("users.userId", "name email");
+        return res.status(200).json(saved);
+      }
     }
 
+    // ── Try to join an existing waiting pool ──
     const existing = await Pool.findOne({
       vehicleType,
       status: "waiting",
@@ -61,6 +93,7 @@ const joinPool = async (req, res) => {
         pool = await existing.save();
       }
     } else {
+      // ── Create a new pool ──
       const isMatched = seatsNum >= cap;
       pool = await Pool.create({
         vehicleType,
@@ -124,7 +157,9 @@ const sendMessage = async (req, res) => {
     if (pool.status !== "matched")
       return res.status(403).json({ message: "Chat is only available in matched pools." });
 
-    const isMember = pool.users.some(u => u.userId.toString() === senderId.toString());
+    const isMember = pool.users.some(
+      (u) => u.userId.toString() === senderId.toString()
+    );
     if (!isMember)
       return res.status(403).json({ message: "You are not a member of this pool." });
 

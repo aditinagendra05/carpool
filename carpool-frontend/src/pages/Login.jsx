@@ -17,10 +17,16 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      await login(form.email, form.password);
+      await login(form.email.trim(), form.password);
       navigate("/dashboard");
     } catch (err) {
-      setError(err?.response?.data?.message || "Invalid credentials. Please try again.");
+      if (err?.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err?.code === "ERR_NETWORK") {
+        setError("Cannot reach server. Is the backend running on port 5001?");
+      } else {
+        setError("Login failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
