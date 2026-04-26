@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: "https://carpool-backend-482767717624.asia-south1.run.app/",
+        target: "https://carpool-backend-482767717624.asia-south1.run.app",
         changeOrigin: true,
         secure: true, // Set to true because Cloud Run uses HTTPS
       }

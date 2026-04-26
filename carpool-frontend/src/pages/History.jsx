@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./History.css";
 
-const BASE_URL = "http://localhost:5001/api/history";
+const BASE_URL = "/api/history";
 
 const getHeaders = () => {
   const token = localStorage.getItem("cp_token");

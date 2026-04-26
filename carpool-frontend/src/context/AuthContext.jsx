@@ -7,8 +7,8 @@ const AuthContext = createContext();
 //  Uses VITE_API_BASE_URL env var if set,
 //  otherwise falls back to localhost:5001.
 // ─────────────────────────────────────────────
-const API_ROOT = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001";
-const BASE = `${API_ROOT}/api/auth`;
+
+const BASE = "/api/auth";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

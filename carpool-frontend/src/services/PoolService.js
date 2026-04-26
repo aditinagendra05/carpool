@@ -7,9 +7,9 @@ import axios from "axios";
 //  your .env file, e.g.:
 //    VITE_API_BASE_URL=http://YOUR_SERVER_IP:5001
 // ─────────────────────────────────────────────
-const API_ROOT = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001";
 
-const BASE_URL = `${API_ROOT}/api/pool`;
+
+const BASE_URL = "/api/pool";
 
 const getHeaders = () => {
   const token = localStorage.getItem("cp_token");
