@@ -8,7 +8,7 @@ const AuthContext = createContext();
 //  otherwise falls back to localhost:5001.
 // ─────────────────────────────────────────────
 
-const BASE = "/api/auth";
+const BASE = `${import.meta.env.VITE_API_URL}/api/auth`;
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

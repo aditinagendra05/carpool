@@ -9,48 +9,30 @@ const poolRoutes = require("./routes/pool");
 
 const app = express();
 
-// ─────────────────────────────────────────────
-//  CORS Configuration
-//  To allow your cloud IP or domain, add it to
-//  the ALLOWED_ORIGINS env variable as a comma-
-//  separated list, e.g.:
-//    ALLOWED_ORIGINS=http://192.168.1.10:5173,https://myapp.example.com
-//
-//  Local dev origins are always included.
-// ─────────────────────────────────────────────
-const LOCAL_ORIGINS = [
+const ALLOWED_ORIGINS = [
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:5175",
   "http://localhost:5176",
+  "https://carpool-backend-482767717624.asia-south1.run.app",
+  "https://storage.googleapis.com",
+  "https://carpool-frontend.storage.googleapis.com",
 ];
 
 app.use(cors({
-  origin: ["http://localhost:5173", "https://carpool-backend-482767717624.asia-south1.run.app"], // This allows any website to access your API (best for testing)
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  origin: (origin, callback) => {
+    // allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked: ${origin}`));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
-
-app.use(express.json());
-
-const extraOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean)
-  : [];
-
-const ALLOWED_ORIGINS = [...new Set([...LOCAL_ORIGINS, ...extraOrigins])];
-
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (origin && ALLOWED_ORIGINS.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-  }
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
-  if (req.method === "OPTIONS") return res.sendStatus(200);
-  next();
-});
 
 app.use(express.json());
 
