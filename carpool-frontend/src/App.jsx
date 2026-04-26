@@ -7,6 +7,12 @@ import Dashboard from "./pages/Dashboard";
 import Waiting from "./pages/Waiting";
 import Pool from "./pages/Pool";
 
+
+import History from "./pages/History";
+
+// inside <Routes>:
+<Route path="/history" element={<PrivateRoute><History /></PrivateRoute>} />
+
 function PrivateRoute({ children }) {
   const { token, loading } = useAuth();
   if (loading) return null;

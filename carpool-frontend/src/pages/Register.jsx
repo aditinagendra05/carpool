@@ -2,7 +2,11 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./Auth.css";
+import { useToast } from "../components/Toast";
+const toast = useToast();
 
+// on success: toast("Account created! Welcome 🎉", "success");
+// on error:   toast(err?.response?.data?.message || "Registration failed.", "error");
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();

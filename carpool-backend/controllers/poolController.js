@@ -150,6 +150,27 @@ const getMessages = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch messages." });
   }
+
+  
 };
 
-module.exports = { joinPool, getPool, sendMessage, getMessages, closePool };
+// ── GET /api/pool/history/:userId ──
+const getUserHistory = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const pools = await Pool.find({
+      "users.userId": userId,
+      status: "closed",
+    })
+      .populate("users.userId", "name email")
+      .select("-messages")
+      .sort({ updatedAt: -1 })
+      .limit(20);
+    res.json(pools);
+  } catch (err) {
+    console.error("getUserHistory error:", err);
+    res.status(500).json({ message: "Failed to fetch history." });
+  }
+};
+
+module.exports = { joinPool, getPool, sendMessage, getMessages, closePool, getUserHistory };

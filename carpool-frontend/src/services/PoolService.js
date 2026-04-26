@@ -34,3 +34,8 @@ export const getMessages = async (poolId) => {
   const res = await axios.get(`${BASE_URL}/${poolId}/messages`, { headers: getHeaders() });
   return res.data;
 };
+
+export const getUserHistory = async (userId) => {
+  const res = await axios.get(`${BASE_URL}/history/${userId}`, { headers: getHeaders() });
+  return res.data;
+};

@@ -3,7 +3,12 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getPool, sendMessage, getMessages, closePool } from "../services/PoolService";
 import "./Pool.css";
+import { useToast } from "../components/Toast";
+const toast = useToast();
 
+// after sendMessage success: toast("Message sent", "success");
+// after closePool success:   toast("Pool closed", "info");
+// when pool auto-closes:     toast("Pool has ended. Redirecting...", "warning");
 export default function Pool() {
   const location = useLocation();
   const navigate = useNavigate();

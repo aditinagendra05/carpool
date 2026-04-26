@@ -2,7 +2,11 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getPool } from "../services/PoolService";
 import "./Waiting.css";
+import { useToast } from "../components/Toast";
+const toast = useToast();
 
+// when status becomes matched:
+toast("Pool matched! 🎉 Get ready!", "success");
 export default function Waiting() {
   const navigate = useNavigate();
   const location = useLocation();

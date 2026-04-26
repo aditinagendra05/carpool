@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { joinPool } from "../services/PoolService";
+import { useToast } from "../components/Toast";
 import "./Dashboard.css";
 
 const VEHICLES = [
@@ -12,15 +13,15 @@ const VEHICLES = [
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
+
   const [vehicle, setVehicle] = useState("auto");
   const [people, setPeople] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const maxSeats = VEHICLES.find(v => v.id === vehicle)?.capacity ?? 4;
 
   const handleJoin = async () => {
-    setError("");
     setLoading(true);
     try {
       const data = await joinPool({
@@ -28,9 +29,10 @@ export default function Dashboard() {
         vehicleType: vehicle,
         seats: Number(people),
       });
+      toast("Finding your pool match!", "info");
       navigate("/waiting", { state: { poolId: data._id } });
     } catch (err) {
-      setError(err?.response?.data?.message || "Failed to join pool. Try again.");
+      toast(err?.response?.data?.message || "Failed to join pool. Try again.", "error");
       setLoading(false);
     }
   };
@@ -45,6 +47,9 @@ export default function Dashboard() {
         </div>
         <div className="dash-user">
           <span className="dash-user-name">{user?.name}</span>
+          <button className="btn-logout" onClick={() => navigate("/history")}>
+            🗂️ History
+          </button>
           <button className="btn-logout" onClick={logout}>Sign out</button>
         </div>
       </header>
@@ -81,7 +86,10 @@ export default function Dashboard() {
                 <button
                   key={v.id}
                   className={`vehicle-card${vehicle === v.id ? " selected" : ""}`}
-                  onClick={() => { setVehicle(v.id); setPeople(Math.min(people, v.capacity)); }}
+                  onClick={() => {
+                    setVehicle(v.id);
+                    setPeople(Math.min(people, v.capacity));
+                  }}
                 >
                   <span className="vehicle-icon">{v.icon}</span>
                   <span className="vehicle-label">{v.label}</span>
@@ -106,14 +114,19 @@ export default function Dashboard() {
                 </button>
               ))}
             </div>
-            <p className="people-hint">{people} {people === 1 ? "person" : "people"} travelling</p>
+            <p className="people-hint">
+              {people} {people === 1 ? "person" : "people"} travelling
+            </p>
           </section>
 
           {/* Summary */}
           <div className="dash-summary">
             <div className="summary-row">
               <span>Vehicle</span>
-              <span>{VEHICLES.find(v => v.id === vehicle)?.icon} {vehicle.charAt(0).toUpperCase() + vehicle.slice(1)}</span>
+              <span>
+                {VEHICLES.find(v => v.id === vehicle)?.icon}{" "}
+                {vehicle.charAt(0).toUpperCase() + vehicle.slice(1)}
+              </span>
             </div>
             <div className="summary-row">
               <span>Passengers</span>
@@ -125,14 +138,14 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {error && <div className="alert alert-error">{error}</div>}
-
           <button
             className="btn-join"
             onClick={handleJoin}
             disabled={loading}
           >
-            {loading ? <><span className="btn-spinner-dark" />Finding pool…</> : "🔍 Find Pool"}
+            {loading
+              ? <><span className="btn-spinner-dark" /> Finding pool…</>
+              : "🔍 Find Pool"}
           </button>
         </div>
       </main>

@@ -2,7 +2,11 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./Auth.css";
+import { useToast } from "../components/Toast";
+const toast = useToast();
 
+// on success: toast("Welcome back! 👋", "success");
+// on error:   toast(err?.response?.data?.message || "Invalid credentials.", "error");
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
